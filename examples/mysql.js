@@ -26,15 +26,15 @@ var util = require('util');
 var options = {
   name: 'test',
   debug: true,
-  concurrency: 50,
-  taskSourceInit: function() {
+  concurrency: 5,
+  taskSourceInit: function(callback) {
     var pool = mysql.createPool({
       host: '127.0.0.1',
       port: 3306,
       user: 'root',
       password: 'pass'
     });
-    return {pool: pool, item: 0};
+    callback({pool: pool, item: 0});
   },
   taskSourceTerminate: function(state) {
     state.pool.end();

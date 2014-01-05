@@ -44,10 +44,11 @@ var options = {
   // How many minions to run concurrently.
   concurrency: 10,
 
-  // Called to initialize a 'task source'. It should return an initial 'state'
-  // (like db connections, file descriptors, etc). See below.
-  taskSourceInit: function() {
-    return {};
+  // Called to initialize a 'task source'. It should call the callback with
+  // an initial 'state' (like db connections, file descriptors, etc). See below.
+  // The state will be passed when calling the next property.
+  taskSourceInit: function(callback) {
+    callback({});
   },
 
   // The task source produce 'tasks', that are assigned to minions. A task

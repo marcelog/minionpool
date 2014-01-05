@@ -31,17 +31,19 @@ util.inherits(MinionPool, events.EventEmitter);
 // Internal
 MinionPool.prototype.next = function(callback) {
   var self = this;
-  this.taskSourceState = self.taskSource(self.taskSourceState, function(task) {
-    if(task === undefined) {
-      if(self.debug) {
-        self.debugMsg('MinionPool %s: No more tasks', self.name);
+  if(self.noMoreTasks) {
+    callback(undefined);
+  } else {
+    this.taskSourceState = self.taskSource(self.taskSourceState, function(task) {
+      if(task === undefined) {
+        if(self.debug) {
+          self.debugMsg('MinionPool %s: No more tasks', self.name);
+        }
+        self.noMoreTasks = true;
       }
-      self.emit('noMoreTasks');
-      self.noMoreTasks = true;
-      self.taskSourceTerminate(self.taskSourceState);
-    }
-    callback(task);
-  });
+      callback(task);
+    });
+  }
 };
 
 MinionPool.prototype.initMinions = function() {
@@ -76,19 +78,31 @@ MinionPool.prototype.initMinions = function() {
 
 MinionPool.prototype.start = function() {
   var self = this;
+  this.minionsFinished = 0;
+  self.on('minionFinished', function(id) {
+    self.minionsFinished++;
+    if(self.minionsFinished === self.concurrency) {
+      if(self.debug) {
+        self.debugMsg('MinionPool %s: All minions done, shutting down', self.name);
+      }
+      self.taskSourceTerminate(self.taskSourceState);
+    }
+  });
   if(this.debug) {
     this.debugMsg('MinionPool %s: Starting work', this.name);
   }
   this.initMinions();
-  this.taskSourceState = this.taskSourceInit();
-  this.currentTasks = 0;
-  this.on('taskEnded', function(result) {
-    var minionId = result.minionId;
-    self.assignTask(minionId);
+  this.taskSourceInit(function(state) {
+    self.taskSourceState = state;  
+    self.currentTasks = 0;
+    self.on('taskEnded', function(result) {
+      var minionId = result.minionId;
+      self.assignTask(minionId);
+    });
+    for(var i = 0; i < self.concurrency; i++) {
+      self.assignTask(i);
+    }
   });
-  for(var i = 0; i < self.concurrency; i++) {
-    self.assignTask(i);
-  }
 };
 
 MinionPool.prototype.assignTask = function(minionId) {
@@ -106,6 +120,8 @@ MinionPool.prototype.assignTask = function(minionId) {
         );
       }
       minion.workOn(task, self.taskEnded);
+    } else {
+      self.emit('minionFinished', minionId);
     }
   });
 };
