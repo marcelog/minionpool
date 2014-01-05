@@ -1,0 +1,17 @@
+{
+  "author": "Marcelo Gornstein <marcelog@gmail.com>",
+  "name": "minions",
+  "description": "A simple task-consumer pool for nodejs",
+  "version": "0.0.1",
+  "homepage": "https://github.com/marcelog/minions",
+  "keywords": [
+    "worker", "pool", "task", "consumer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/marcelog/minions.git"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {}
+}
