@@ -2,8 +2,19 @@
 **minions** allows you to concurrently process any tasks you need to (similar to
 a worker pool). And it's very simple to use.
 
-# Basic Usage
+# How it works
+First things first. To make use of this, you just have to provide a few callbacks,
+then instantiate a MinionPool and start() it. A *MinionPool* has
+*Minions*, that process *tasks*. Tasks are provided by a *task source*, which
+is called to get one task at a time, one for each minion started, and one for
+each minion that finishes a previous task.
 
+Both the minions and the task source can keep a *state*, which is useful to keep
+database connections for example. 
+
+# Quick Example
+
+## Main code
 ```js
 var minionsMod = require('./src/minions');
 
@@ -15,6 +26,7 @@ try {
 }
 ```
 
+## Configuring the pool
 Let's see now what can be defined inside the **options** that we're passing to
 the **MinionPool** constructor:
 
