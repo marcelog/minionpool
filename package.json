@@ -2,14 +2,14 @@
   "author": "Marcelo Gornstein <marcelog@gmail.com>",
   "name": "minionpool",
   "description": "A simple task-consumer pool for nodejs",
-  "version": "0.0.1",
-  "homepage": "https://github.com/marcelog/minions",
+  "version": "0.0.2",
+  "homepage": "https://github.com/marcelog/minionpool",
   "keywords": [
     "worker", "pool", "task", "consumer"
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/marcelog/minions.git"
+    "url": "git://github.com/marcelog/minionpool.git"
   },
   "dependencies": {
   },

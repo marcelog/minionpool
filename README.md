@@ -1,5 +1,5 @@
 # About
-**minions** allows you to concurrently process any tasks you need to (similar to
+**minionpool** allows you to concurrently process any tasks you need to (similar to
 a worker pool). And it's very simple to use.
 
 ## Installing it
@@ -19,10 +19,10 @@ database connections for example.
 
 ## Main code
 ```js
-var minionsMod = require('./src/minions');
+var minionpoolMod = require('./src/minionpool');
 
 try {
-  var minionPool = new minionsMod.MinionPool(options);
+  var minionPool = new minionpoolMod.MinionPool(options);
   minionPool.start();
 } catch(error) {
   console.log(util.inspect(error));

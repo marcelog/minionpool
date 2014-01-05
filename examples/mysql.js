@@ -19,7 +19,7 @@
  * copyright Marcelo Gornstein <marcelog@gmail.com>
  * author Marcelo Gornstein <marcelog@gmail.com>
  */
-var minionsMod = require('../src/minions');
+var minionsMod = require('../src/minionpool');
 var mysql = require('mysql');
 var util = require('util');
 
