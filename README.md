@@ -2,6 +2,9 @@
 **minions** allows you to concurrently process any tasks you need to (similar to
 a worker pool). And it's very simple to use.
 
+## Installing it
+The npm package is called **minionpool**.
+
 # How it works
 First things first. To make use of this, you just have to provide a few callbacks,
 then instantiate a MinionPool and start() it. A *MinionPool* has
