@@ -28,23 +28,6 @@ function Minion(options) {
 
 util.inherits(Minion, baseMod.Base);
 
-Minion.prototype.start = function() {
-  var self = this;
-  this.startFunction(function(state) {
-    self.state = state;
-    self.emit('started');
-    self.debugMsg('Started');
-  });
-};
-
-Minion.prototype.end = function() {
-  var self = this;
-  this.endFunction(this.state, function() {
-    self.emit('ended');
-    self.debugMsg('Ended');
-  });
-};
-
 Minion.prototype.workOn = function(task) {
   var self = this;
   this.handlerFunction(task, this.state, function(result, state) {

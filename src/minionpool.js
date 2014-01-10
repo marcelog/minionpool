@@ -25,6 +25,7 @@ var baseMod = require('./base');
 var taskSourceMod = require('./task_source');
 
 function MinionPool(options) {
+  var self = this;
   options.name = options.name + ' Pool';
   MinionPool.super_.call(this, options);
   this.minions = [];
@@ -33,28 +34,23 @@ function MinionPool(options) {
   this.minionsIdle = 0;
   this.noMoreTasks = false;
   this.setupEvents();
+  this.startFunction = function() {
+    self.taskSource = new taskSourceMod.TaskSource({
+      name: self.name + '- task source',
+      debug: self.debug,
+      startFunction: self.taskSourceStart,
+      endFunction: self.taskSourceEnd,
+      nextFunction: self.taskSourceNext
+    });
+    self.taskSource.on('started', function() {
+      self.emit('taskSourceStarted');
+    });
+    for(var id = 0; id < self.concurrency; id++) {
+      self.startMinion(id);
+    }
+  }
 }
 util.inherits(MinionPool, baseMod.Base);
-
-MinionPool.prototype.start = function() {
-  var self = this;
-  this.taskSource = new taskSourceMod.TaskSource({
-    name: this.name + '- task source',
-    debug: this.debug,
-    startFunction: this.taskSourceStart,
-    endFunction: this.taskSourceEnd,
-    nextFunction: this.taskSourceNext
-  });
-  this.taskSource.on('started', function() {
-    self.emit('taskSourceStarted');
-  });
-  for(var id = 0; id < this.concurrency; id++) {
-    this.startMinion(id);
-  }
-};
-
-MinionPool.prototype.end = function() {
-};
 
 MinionPool.prototype.setupEvents = function() {
   var self = this;

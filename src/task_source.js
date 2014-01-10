@@ -28,26 +28,9 @@ function TaskSource(options) {
 
 util.inherits(TaskSource, baseMod.Base);
 
-TaskSource.prototype.start = function() {
-  var self = this;
-  this.startFunction(function(state) {
-    self.state = state;
-    self.emit('started');
-    self.debugMsg('Started');
-  });
-};
-
 TaskSource.prototype.next = function(callback) {
   var self = this;
   this.state = this.nextFunction(this.state, callback);
-};
-
-TaskSource.prototype.end = function() {
-  var self = this;
-  this.endFunction(this.state, function() {
-    self.emit('ended');
-    self.debugMsg('Ended');
-  });
 };
 
 exports.TaskSource = TaskSource;
