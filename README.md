@@ -48,7 +48,7 @@ var options = {
   // an initial 'state' (like db connections, file descriptors, etc). See below.
   // The state will be passed when calling the next property.
   taskSourceStart: function(callback) {
-    callback({});
+    callback(state);
   },
 
   // The task source produce 'tasks', that are assigned to minions. A task
@@ -68,15 +68,15 @@ var options = {
   },
 
   // The actual code that works on a task. Should call the 'callback' when
-  // done, the result for that task, and a new state.
+  // done, passing the result for that task, and a new state.
   minionTaskHandler: function(task, state, callback) {
-    callback({}, state);
+    callback(result, state);
   },
 
   // Called to initialize each one of the minions. Returns the initial state for
   // each one of them.
   minionStart: function(callback) {
-    callback({});
+    callback(state);
   },
 
   // Called to cleanup any needed stuff for each minion.
