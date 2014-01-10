@@ -20,130 +20,137 @@
  */
 var util = require('util');
 var events = require('events');
+var minionMod = require('./minion');
+var baseMod = require('./base');
+var taskSourceMod = require('./task_source');
 
 function MinionPool(options) {
-  for(k in options) {
-    this[k] = options[k];
-  }
-}
-util.inherits(MinionPool, events.EventEmitter);
-
-// Internal
-MinionPool.prototype.next = function(callback) {
-  var self = this;
-  if(self.noMoreTasks) {
-    callback(undefined);
-  } else {
-    this.taskSourceState = self.taskSource(self.taskSourceState, function(task) {
-      if(task === undefined) {
-        if(self.debug) {
-          self.debugMsg('MinionPool %s: No more tasks', self.name);
-        }
-        self.noMoreTasks = true;
-      }
-      callback(task);
-    });
-  }
-};
-
-MinionPool.prototype.initMinions = function() {
-  var self = this;
+  options.name = options.name + ' Pool';
+  MinionPool.super_.call(this, options);
   this.minions = [];
-  for(var i = 0; i < this.concurrency; i++) {
-    if(this.debug) {
-      this.debugMsg('MinionPool %s: Starting minion #%d', this.name, i);
-    }
-    this.minions.push(
-      new Minion({
-        id: i,
-        debug: this.debug,
-        state: this.minionInit(i),
-        handler: function(minionId, task, result) {
-          if(self.debug) {
-            self.debugMsg(
-              'MinionPool %s: #%d: Task (%s) finished with: %s',
-              self.name, minionId, JSON.stringify(task), JSON.stringify(result)
-            );
-          }
-          self.emit('taskEnded', {
-            task: task,
-            minionId: minionId,
-            result: result
-          });
-        }
-      })
-    );
-  } 
-};
+  this.minionsStarted = 0;
+  this.minionsFinished = 0;
+  this.minionsIdle = 0;
+  this.noMoreTasks = false;
+  this.setupEvents();
+}
+util.inherits(MinionPool, baseMod.Base);
 
 MinionPool.prototype.start = function() {
   var self = this;
-  this.minionsFinished = 0;
-  self.on('minionFinished', function(id) {
-    self.minionsFinished++;
-    if(self.minionsFinished === self.concurrency) {
-      if(self.debug) {
-        self.debugMsg('MinionPool %s: All minions done, shutting down', self.name);
-      }
-      self.taskSourceTerminate(self.taskSourceState);
+  this.taskSource = new taskSourceMod.TaskSource({
+    name: this.name + '- task source',
+    debug: this.debug,
+    startFunction: this.taskSourceStart,
+    endFunction: this.taskSourceEnd,
+    nextFunction: this.taskSourceNext
+  });
+  this.taskSource.on('started', function() {
+    self.emit('taskSourceStarted');
+  });
+  for(var id = 0; id < this.concurrency; id++) {
+    this.startMinion(id);
+  }
+};
+
+MinionPool.prototype.end = function() {
+};
+
+MinionPool.prototype.setupEvents = function() {
+  var self = this;
+  this.on('allMinionsStarted', function() {
+    self.debugMsg('All workers started');
+    self.taskSource.start();
+  });
+  this.on('allMinionsFinished', function() {
+    self.debugMsg('All workers ended');
+    self.taskSource.end();
+  });
+  this.on('minionStarted', function(id) {
+    self.minionsStarted++;
+    if(self.minionsStarted === self.concurrency) {
+      self.emit('allMinionsStarted');
     }
   });
-  if(this.debug) {
-    this.debugMsg('MinionPool %s: Starting work', this.name);
-  }
-  this.initMinions();
-  this.taskSourceInit(function(state) {
-    self.taskSourceState = state;  
-    self.currentTasks = 0;
-    self.on('taskEnded', function(result) {
-      var minionId = result.minionId;
-      self.assignTask(minionId);
-    });
+  this.on('minionEnded', function(id) {
+    self.minionsFinished++;
+    if(self.minionsFinished === self.concurrency) {
+      self.emit('allMinionsFinished');
+    }
+  });
+  this.on('minionIdle', function(id) {
+    self.debugMsg('Minion ', id, ' is idle');
+    self.minions[id].end();
+    self.minionsIdle++;
+  });
+  this.on('minionTaskFinished', function(id, task, result) {
+    self.assignTask(id);
+  });
+  this.on('taskSourceStarted', function() {
     for(var i = 0; i < self.concurrency; i++) {
       self.assignTask(i);
     }
   });
+  this.on('taskSourceEnded', function() {
+    self.end();
+  });
+};
+
+MinionPool.prototype.startMinion = function(id) {
+  var self = this;
+  var newMinion = new minionMod.Minion({
+    name: this.name + '- worker #' + id,
+    id: id,
+    debug: this.debug,
+    startFunction: this.minionStart,
+    endFunction: this.minionEnd,
+    handlerFunction: this.minionTaskHandler
+  });
+  newMinion.on('started', function() {
+    self.emit('minionStarted', id);
+  });
+  newMinion.on('ended', function() {
+    self.emit('minionEnded', id);
+  });
+  this.minions.push(newMinion);
+  newMinion.start();
 };
 
 MinionPool.prototype.assignTask = function(minionId) {
   var self = this;
   var minion = self.minions[minionId];
   if(self.debug) {
-    self.debugMsg('MinionPool %s: Fetching next task for: #%d', self.name, minionId);
+    self.debugMsg('Fetching next task for: #', minionId);
   }
   this.next(function(task) {
     if(task !== undefined) {
       if(self.debug) {
         self.debugMsg(
-          'MinionPool %s: Minion #%d: Assigning task: %s',
-          self.name, minionId, JSON.stringify(task)
+          'Assigning task: ', minionId, JSON.stringify(task)
         );
       }
+      minion.once('taskFinished', function(result) {
+        self.emit('minionTaskFinished', minionId, task, result);
+      });
       minion.workOn(task, self.taskEnded);
     } else {
-      self.emit('minionFinished', minionId);
+      self.emit('minionIdle', minionId);
     }
   });
 };
 
-MinionPool.prototype.debugMsg = function() {
-  if(this.debug) {
-    console.log.apply(undefined, Array.prototype.slice.call(arguments));
-  }
-};
-
-function Minion(options) {
-  for(k in options) {
-    this[k] = options[k];
-  }
-}
-
-Minion.prototype.workOn = function(task, callback) {
+MinionPool.prototype.next = function(callback) {
   var self = this;
-  this.handler(this.id, task, this.state, function(result) {
-    self.state = result.state;
-    callback(self.id, task, result.result);
-  });
+  if(self.noMoreTasks) {
+    callback(undefined);
+  } else {
+    this.taskSource.next(function(task) {
+      if(task === undefined) {
+        self.noMoreTasks = true;
+      }
+      callback(task);
+    });
+  }
 };
 
 exports.MinionPool = MinionPool;

@@ -22,12 +22,15 @@
 var minionsMod = require('../src/minionpool');
 var mysql = require('mysql');
 var util = require('util');
+var log4js = require('log4js');
+var logger = log4js.getLogger();
 
 var options = {
   name: 'test',
   debug: true,
   concurrency: 5,
-  taskSourceInit: function(callback) {
+  logger: function() { logger.debug.apply(logger, Array.prototype.slice.call(arguments))},
+  taskSourceStart: function(callback) {
     var pool = mysql.createPool({
       host: '127.0.0.1',
       port: 3306,
@@ -36,10 +39,10 @@ var options = {
     });
     callback({pool: pool, item: 0});
   },
-  taskSourceTerminate: function(state) {
-    state.pool.end();
+  taskSourceEnd: function(state, callback) {
+    state.pool.end(callback);
   },
-  taskSource: function(state, callback) {
+  taskSourceNext: function(state, callback) {
     var db = 'db';
     var table = 'table';
     var sql = 'SELECT * FROM `' + db + '`.`' + table + '` ORDER BY `id` ASC LIMIT ?,1';
@@ -54,17 +57,19 @@ var options = {
     state.item++;
     return state;
   },
-  minionInit: function(id) {
-    return {};
+  minionTaskHandler: function(task, state, callback) {
+    callback({}, state);
   },
-  taskHandler: function(minionId, task, state, callback) {
-    callback(minionId, task, {});
+  minionStart: function(callback) {
+    callback({});
+  },
+  minionEnd: function(state, callback) {
+    callback();
+  },
+  poolEnd: function() {
+    process.exit(0);
   }
 };
 
-try {
-  var minionPool = new minionsMod.MinionPool(options);
-  minionPool.start();
-} catch(error) {
-  console.log(util.inspect(error));
-}
+var minionPool = new minionsMod.MinionPool(options);
+minionPool.start();
