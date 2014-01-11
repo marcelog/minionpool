@@ -15,6 +15,12 @@ each minion that finishes a previous task.
 Both the minions and the task source can keep a *state*, which is useful to keep
 database connections for example. 
 
+## Polling for tasks vs Injecting tasks
+You can either make the pool poll for tasks from the task source, or inject
+tasks asynchronously "from the outside". You can also find an example
+of polling from tasks in the mysql example, and one that injects tasks in the
+rabbitmq example. See below. 
+
 # Quick Example
 
 ## Main code
@@ -51,10 +57,15 @@ var options = {
     callback(state);
   },
 
-  // The task source produce 'tasks', that are assigned to minions. A task
-  // source receives its state from 'taskSourceStart' first, and then from whatever
-  // it returns on subsequen calls (see below). Also, it should call the
-  // callback with the new task (or 'undefined' when none is found).
+  // Polling for tasks: The task source produce 'tasks', that are assigned to
+  // minions. A task source receives its state from 'taskSourceStart' first, and
+  // then from whatever it returns on subsequen calls (see below). Also, it
+  // should call the callback with the new task (or 'undefined' when none is found).
+  //
+  // If you are not going to poll for tasks, set this one to undefined, and call
+  // MinionPool.injectTask() to inject the tasks into the pool, they will be 
+  // assigned to free minions (or rescheduled if none is available at the time,
+  // be careful not to produce too many tasks).
   taskSourceNext: function(state, callback) {
     var task = ...;
     callback(task);
@@ -93,6 +104,9 @@ var options = {
 
 ## Example using MySQL (will process all rows in a given table).
 See [this](https://github.com/marcelog/minions/tree/master/examples/mysql.js).
+
+## Example using RabbitMQ
+See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js).
 
 ## Into the details: Lifecycle
 

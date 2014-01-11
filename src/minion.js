@@ -29,6 +29,10 @@ function Minion(options) {
 
 util.inherits(Minion, baseMod.Base);
 
+Minion.prototype.isBusy = function() {
+	return this.busy;
+};
+
 Minion.prototype.workOn = function(task) {
   var self = this;
   this.busy = true;

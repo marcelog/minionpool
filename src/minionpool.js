@@ -34,10 +34,18 @@ function MinionPool(options) {
   this.minionsIdle = 0;
   this.noMoreTasks = false;
   this.setupEvents();
+  this.shutdown = false;
+  this.endFunction = function() {
+    self.shutdown = true;
+    for(var i = 0; i < this.minions.length; i++) {
+      self.minions[i].end();
+    }
+  },
   this.startFunction = function() {
     self.taskSource = new taskSourceMod.TaskSource({
       name: self.name + '- task source',
       debug: self.debug,
+      logger: self.logger,
       startFunction: self.taskSourceStart,
       endFunction: self.taskSourceEnd,
       nextFunction: self.taskSourceNext
@@ -51,6 +59,37 @@ function MinionPool(options) {
   }
 }
 util.inherits(MinionPool, baseMod.Base);
+
+MinionPool.prototype.injectTask = function(task) {
+  var self = this;
+  if(this.shutdown) {
+    return;
+  }
+  var minionId = this.findAvailableMinion();
+  if(minionId === -1) {
+    // Try to reschedule.
+    if(this.debug) {
+      this.debugMsg('No available workers, rescheduling task');
+    }
+    setTimeout(function() {
+      self.injectTask(task);
+    }, 100);
+  } else {
+    if(this.debug) {
+      this.debugMsg('Assigning injected task to: ', minionId);
+    }
+    this.minions[minionId].workOn(task);
+  }
+};
+
+MinionPool.prototype.findAvailableMinion = function() {
+  for(var i = 0; i < this.minions.length; i++) {
+    if(!this.minions[i].isBusy()) {
+      return i;
+    }
+  }
+  return -1;
+};
 
 MinionPool.prototype.setupEvents = function() {
   var self = this;
@@ -83,8 +122,10 @@ MinionPool.prototype.setupEvents = function() {
     self.assignTask(id);
   });
   this.on('taskSourceStarted', function() {
-    for(var i = 0; i < self.concurrency; i++) {
-      self.assignTask(i);
+    if(this.taskSourceNext !== undefined) {
+      for(var i = 0; i < self.concurrency; i++) {
+        self.assignTask(i);
+      }
     }
   });
   this.on('taskSourceEnded', function() {
@@ -98,6 +139,7 @@ MinionPool.prototype.startMinion = function(id) {
     name: this.name + '- worker #' + id,
     id: id,
     debug: this.debug,
+    logger: this.logger,
     startFunction: this.minionStart,
     endFunction: this.minionEnd,
     handlerFunction: this.minionTaskHandler
@@ -121,9 +163,7 @@ MinionPool.prototype.assignTask = function(minionId) {
   this.next(function(task) {
     if(task !== undefined) {
       if(self.debug) {
-        self.debugMsg(
-          'Assigning task: ', minionId, JSON.stringify(task)
-        );
+        self.debugMsg('Assigning task: ', minionId, JSON.stringify(task));
       }
       minion.once('taskFinished', function(result) {
         self.emit('minionTaskFinished', minionId, task, result);
