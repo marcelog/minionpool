@@ -108,13 +108,13 @@ See [this](https://github.com/marcelog/minions/tree/master/examples/mysql.js).
 ## Example using RabbitMQ
 See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js).
 
-## Into the details: Lifecycle
+## Into the details: Lifecycle (Polling)
 
  1. A pool starts.
  2. All minions in the pool are started. For each minion, *minionStart* is called.
  3. After all the minions are started, the task source is started, by calling
  *taskSourceStart*.
- 4. After the task source starts, one task per minion is requested by calling
+ 4. After the task source starts one task per minion is requested by calling
  *taskSourceNext*.
  5. When a minion finishes processing a task (*minionTaskHandler*), a new one
  will be assigned to it.
@@ -124,5 +124,22 @@ See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js)
  calling *taskSourceEnd*.
  8. When the task source shuts down, the pool will shut down, and *poolEnd* will
  be called.
+
+## Into the details: Lifecycle (Injected tasks)
+
+ 1. A pool starts.
+ 2. All minions in the pool are started. For each minion, *minionStart* is called.
+ 3. After all the minions are started, the task source is started, by calling
+ *taskSourceStart*.
+ 4. Someone calls *MinionPool.injectTask* from the outside, a free minion is
+ picked up and the task is assigned to it. Otherwise, the task is rescheduled
+ internally until a free minion is available.
+ 5. The pool only shuts down when MinionPool.end() is called. Then all minions
+ are finished.
+ 6. When all the minions have shutdowned, the task source will shutdown too, by
+ calling *taskSourceEnd*.
+ 7. When the task source shuts down, the pool will shut down, and *poolEnd* will
+ be called.
+
 
 
