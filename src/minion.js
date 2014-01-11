@@ -24,15 +24,18 @@ var baseMod = require('./base');
 
 function Minion(options) {
   Minion.super_.call(this, options);
+  this.busy = false;
 }
 
 util.inherits(Minion, baseMod.Base);
 
 Minion.prototype.workOn = function(task) {
   var self = this;
+  this.busy = true;
   this.handlerFunction(task, this.state, function(result, state) {
+    self.busy = false;
     self.state = state;
-    self.emit('taskFinished', task, result)
+    self.emit('taskFinished', task)
   });
 };
 

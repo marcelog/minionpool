@@ -68,9 +68,9 @@ var options = {
   },
 
   // The actual code that works on a task. Should call the 'callback' when
-  // done, passing the result for that task, and a new state.
+  // done, passing the new state.
   minionTaskHandler: function(task, state, callback) {
-    callback(result, state);
+    callback(state);
   },
 
   // Called to initialize each one of the minions. Returns the initial state for

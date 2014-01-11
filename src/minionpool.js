@@ -79,7 +79,7 @@ MinionPool.prototype.setupEvents = function() {
     self.minions[id].end();
     self.minionsIdle++;
   });
-  this.on('minionTaskFinished', function(id, task, result) {
+  this.on('minionTaskFinished', function(id, task) {
     self.assignTask(id);
   });
   this.on('taskSourceStarted', function() {

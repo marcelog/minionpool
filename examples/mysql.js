@@ -59,16 +59,18 @@ var options = {
   },
   minionTaskHandler: function(task, state, callback) {
     // Your code goes here, to process each row.
-    callback({}, state);
+    callback(state);
   },
   minionStart: function(callback) {
     callback({});
   },
   minionEnd: function(state, callback) {
-    state.pool.end(callback);
+    callback(state);
   },
   poolEnd: function() {
-    process.exit(0);
+    state.pool.end(function() {
+      process.exit(0);
+    });
   }
 };
 
