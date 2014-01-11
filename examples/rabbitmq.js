@@ -44,7 +44,6 @@ var options = {
 
   taskSourceStart: function(callback) {
     state = {};
-    state.tasks = [];
     var mqOptions = {
       host: '127.0.0.1',
       login: 'guest',
