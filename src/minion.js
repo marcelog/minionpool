@@ -36,7 +36,7 @@ Minion.prototype.isBusy = function() {
 Minion.prototype.workOn = function(task) {
   var self = this;
   this.busy = true;
-  this.handlerFunction(task, this.state, function(result, state) {
+  this.handlerFunction(task, this.state, function(state) {
     self.busy = false;
     self.state = state;
     self.emit('taskFinished', task)
