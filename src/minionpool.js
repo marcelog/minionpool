@@ -27,19 +27,19 @@ var taskSourceMod = require('./task_source');
 function MinionPool(options) {
   var self = this;
   if(options.minionStart === undefined) {
-    options.minionStart = function(c) { c({}); };
+    options.minionStart = this.dummyMinionStart;
   }
   if(options.minionEnd === undefined) {
-    options.minionEnd = function(s, c) { c(); };
+    options.minionEnd = this.dummyMinionEnd;
   }
   if(options.poolEnd === undefined) {
-    options.poolEnd = function() { };
+    options.poolEnd = this.dummyPoolEnd;
   }
   if(options.taskSourceStart === undefined) {
-    options.taskSourceStart = function(c) { c({}); };
+    options.taskSourceStart = this.dummyTaskSourceStart;
   }
   if(options.taskSourceEnd === undefined) {
-    options.taskSourceEnd = function(s, c) { c(); };
+    options.taskSourceEnd = this.dummyTaskSourceEnd;
   }
   options.name = options.name + ' Pool';
   MinionPool.super_.call(this, options);
@@ -203,6 +203,24 @@ MinionPool.prototype.next = function(callback) {
     });
   }
 };
+
+MinionPool.prototype.dummyMinionStart = function(callback) {
+  callback({});
+};
+
+MinionPool.prototype.dummyMinionEnd = function(state, callback) {
+  callback();
+};
+
+MinionPool.prototype.dummyTaskSourceStart = function(callback) {
+  callback({});
+};
+
+MinionPool.prototype.dummyTaskSourceEnd = function(state, callback) {
+  callback();
+};
+
+MinionPool.prototype.dummyPoolEnd = function() {};
 
 exports.MinionPool = MinionPool;
 exports.ArrayMinionPool = require('./array_minionpool').ArrayMinionPool;
