@@ -205,3 +205,4 @@ MinionPool.prototype.next = function(callback) {
 };
 
 exports.MinionPool = MinionPool;
+exports.ArrayMinionPool = require('./array_minionpool').ArrayMinionPool;
