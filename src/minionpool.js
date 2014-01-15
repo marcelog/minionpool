@@ -26,6 +26,21 @@ var taskSourceMod = require('./task_source');
 
 function MinionPool(options) {
   var self = this;
+  if(options.minionStart === undefined) {
+    options.minionStart = function(c) { c({}); };
+  }
+  if(options.minionEnd === undefined) {
+    options.minionEnd = function(s, c) { c(); };
+  }
+  if(options.poolEnd === undefined) {
+    options.poolEnd = function() { };
+  }
+  if(options.taskSourceStart === undefined) {
+    options.taskSourceStart = function(c) { c({}); };
+  }
+  if(options.taskSourceEnd === undefined) {
+    options.taskSourceEnd = function(s, c) { c(); };
+  }
   options.name = options.name + ' Pool';
   MinionPool.super_.call(this, options);
   this.minions = [];
@@ -163,7 +178,7 @@ MinionPool.prototype.assignTask = function(minionId) {
   this.next(function(task) {
     if(task !== undefined) {
       if(self.debug) {
-        self.debugMsg('Assigning task: ', minionId, JSON.stringify(task));
+        self.debugMsg('Assigning task: to ', minionId, JSON.stringify(task));
       }
       minion.once('taskFinished', function(result) {
         self.emit('minionTaskFinished', minionId, task, result);

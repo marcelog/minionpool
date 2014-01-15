@@ -108,6 +108,9 @@ See [this](https://github.com/marcelog/minions/tree/master/examples/mysql.js).
 ## Example using RabbitMQ
 See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js).
 
+## Example using the ArrayMinionPool
+See [this](https://github.com/marcelog/minions/tree/master/examples/array.js).
+
 ## Into the details: Lifecycle (Polling)
 
  1. A pool starts.
