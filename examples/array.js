@@ -31,9 +31,7 @@ var options = {
     setTimeout(function() { callback(state); }, Math.floor(Math.random() * 500));
   },
   poolEnd: function() {
-    state.pool.end(function() {
-      process.exit(0);
-    });
+    process.exit(0);
   }
 };
 

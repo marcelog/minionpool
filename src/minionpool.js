@@ -55,7 +55,8 @@ function MinionPool(options) {
     for(var i = 0; i < this.minions.length; i++) {
       self.minions[i].end();
     }
-  },
+    self.poolEnd();
+  };
   this.startFunction = function() {
     self.taskSource = new taskSourceMod.TaskSource({
       name: self.name + '- task source',
@@ -67,6 +68,9 @@ function MinionPool(options) {
     });
     self.taskSource.on('started', function() {
       self.emit('taskSourceStarted');
+    });
+    self.taskSource.on('ended', function() {
+      self.emit('taskSourceEnded');
     });
     for(var id = 0; id < self.concurrency; id++) {
       self.startMinion(id);
