@@ -50,9 +50,9 @@ var options = {
   // Optional. Uses the given Function to log messages.
   logger: console.log,
 
-  // Called to initialize a 'task source'. It should call the callback with
-  // an initial 'state' (like db connections, file descriptors, etc). See below.
-  // The state will be passed when calling the next property.
+  // Optional. Called to initialize a 'task source'. It should call the callback
+  // with an initial 'state' (like db connections, file descriptors, etc).
+  // See below. The state will be passed when calling the next property.
   taskSourceStart: function(callback) {
     callback(state);
   },
@@ -72,8 +72,9 @@ var options = {
     return state;
   },
 
-  // Called to do any cleanup for the task generator once it runs out of tasks.
-  // Receives the 'state', doesn't have to pass any arguments to the callback.
+  // Optional. Called to do any cleanup for the task generator once it runs out
+  // of tasks. Receives the 'state', doesn't have to pass any arguments to the
+  // callback.
   taskSourceEnd: function(state, callback) {
     callback();
   },
@@ -84,18 +85,18 @@ var options = {
     callback(state);
   },
 
-  // Called to initialize each one of the minions. Returns the initial state for
-  // each one of them.
+  // Optional. Called to initialize each one of the minions. Returns the initial
+  // state for each one of them.
   minionStart: function(callback) {
     callback(state);
   },
 
-  // Called to cleanup any needed stuff for each minion.
+  // Optional. Called to cleanup any needed stuff for each minion.
   minionEnd: function(state, callback) {
     callback();
   },
 
-  // Called when the pool has finished all the available work.
+  // Optional. Called when the pool has finished all the available work.
   poolEnd: function() {
     process.exit(0);
   }
@@ -103,7 +104,10 @@ var options = {
 ```
 
 ## Example using MySQL (will process all rows in a given table).
-See [this](https://github.com/marcelog/minions/tree/master/examples/mysql.js).
+
+You might want to check out [mysql_minionpool](https://github.com/marcelog/mysql_minionpool) if you need to work with mysql, since it's a
+specialized **minionpool**. In any case, [see this](https://github.com/marcelog/minions/tree/master/examples/mysql.js) for an example using
+plain vanilla **minionpool**.
 
 ## Example using RabbitMQ
 See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js).
