@@ -103,6 +103,9 @@ var options = {
 };
 ```
 
+## Example using the ArrayMinionPool
+See [this](https://github.com/marcelog/minions/tree/master/examples/array.js).
+
 ## Example using MySQL (will process all rows in a given table).
 
 You might want to check out [mysql_minionpool](https://github.com/marcelog/mysql_minionpool) if you need to work with mysql, since it's a
@@ -110,10 +113,12 @@ specialized **minionpool**. In any case, [see this](https://github.com/marcelog/
 plain vanilla **minionpool**.
 
 ## Example using RabbitMQ
-See [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js).
 
-## Example using the ArrayMinionPool
-See [this](https://github.com/marcelog/minions/tree/master/examples/array.js).
+As with mysql, there's a specialized minionpool that you might want to check in
+case you want to work with RabbitMQ, it's called [rabbitmq_minionpool](https://github.com/marcelog/rabbitmq_minionpool).
+
+Also, see [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js) for an example of with plain vanilla **minionpool**.
+
 
 ## Into the details: Lifecycle (Polling)
 
