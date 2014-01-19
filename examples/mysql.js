@@ -37,7 +37,7 @@ var options = {
       user: 'root',
       password: 'pass'
     });
-    callback({pool: pool, item: 0});
+    callback(undefined, {pool: pool, item: 0});
   },
   taskSourceEnd: function(state, callback) {
     state.pool.end(callback);
@@ -47,30 +47,31 @@ var options = {
     var table = 'table';
     var sql = 'SELECT * FROM `' + db + '`.`' + table + '` ORDER BY `id` ASC LIMIT ?,1';
     state.pool.query(sql, [state.item], function(err, rows) {
-      if(err) throw(util.inspect(err));
-      var task = undefined;
-      if(rows.length === 1) {
-        task = rows[0];
+      if(err) {
+        callback(err, undefined);
+      } else {
+        var task = undefined;
+        if(rows.length === 1) {
+          task = rows[0];
+        }
+        callback(undefined, task);        
       }
-      callback(task);
     });
     state.item++;
     return state;
   },
   minionTaskHandler: function(task, state, callback) {
     // Your code goes here, to process each row.
-    callback(state);
+    callback(undefined, state);
   },
   minionStart: function(callback) {
-    callback({});
+    callback(undefined, {});
   },
   minionEnd: function(state, callback) {
     callback(state);
   },
   poolEnd: function() {
-    state.pool.end(function() {
-      process.exit(0);
-    });
+    process.exit(0);
   }
 };
 

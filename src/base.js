@@ -21,18 +21,6 @@
 var util = require('util');
 var events = require('events');
 
-/**
- * Options is whatever you want, including:
- * {
- *   name: <string>
- *   debug: <bool>
- *   logger: function(...) console.log compatible (N number of arguments)
- *   startFunction: function(callback) The callback should be called once the
- *                  start phase has been completed. The callback takes 0 args.
- *   endFunction: function(callback) Should be called once the end phase is
- *                completed. The callback does not take any arguments.
- * }
- */
 function Base(options) {
   Base.super_.call(this);
   for(k in options) {
@@ -58,11 +46,23 @@ util.inherits(Base, events.EventEmitter);
 
 Base.prototype.start = function() {
   var self = this;
-  this.startFunction(function(state) {
-    self.state = state;
-    self.emit('started');
-    self.debugMsg('Started');
-  });
+  try {
+    this.startFunction(function(err, state) {
+      self.state = state;
+      if(err) {
+        self.emit('error', err);
+        self.debugMsg('Error: ' + util.inspect(err));
+      } else {
+        self.emit('started');
+        self.debugMsg('Started');
+      }
+    });
+  } catch(exception) {
+    self.emit('error', exception);
+    if(self.debug) {
+      self.debugMsg('Error: ' + util.inspect(exception));
+    }
+  }
 };
 
 Base.prototype.end = function() {
