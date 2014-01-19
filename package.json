@@ -2,7 +2,7 @@
   "author": "Marcelo Gornstein <marcelog@gmail.com>",
   "name": "minionpool",
   "description": "A simple task-consumer pool for nodejs",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "homepage": "https://github.com/marcelog/minionpool",
   "keywords": [
     "worker", "pool", "task", "consumer"
