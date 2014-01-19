@@ -81,7 +81,7 @@ var options = {
           queue.bind(exchange, 'my_key');
           this.workerQueue = queue;
           logger.debug('Queue: binded to my_key');
-          callback(state);
+          callback(undefined, state);
           queue.subscribe({ack: true, prefetchCount: 5}, function(msg) {
             injectTask({queue: queue, task: msg.data.toString('utf-8')});
           });
@@ -102,10 +102,10 @@ var options = {
     var task = data.queue;
     logger.debug('got task: %s', task);
     queue.shift(false);
-    callback(state);
+    callback(undefined, state);
   },
   minionStart: function(callback) {
-    callback({});
+    callback(undefined, {});
   },
   minionEnd: function(state, callback) {
     callback();

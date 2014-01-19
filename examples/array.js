@@ -23,12 +23,13 @@ var util = require('util');
 
 var options = {
   name: 'test',
+  continueOnError: false,
   debug: true,
   concurrency: 5,
   logger: console.log,
   minionTaskHandler: function(task, state, callback) {
     // Simulate some work after a giving time.
-    setTimeout(function() { callback(state); }, Math.floor(Math.random() * 500));
+    setTimeout(function() { callback(undefined, state); }, Math.floor(Math.random() * 500));
   },
   poolEnd: function() {
     process.exit(0);

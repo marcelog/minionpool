@@ -26,6 +26,9 @@ var taskSourceMod = require('./task_source');
 
 function MinionPool(options) {
   var self = this;
+  if(options.continueOnError === undefined) {
+    options.continueOnError = true;
+  }
   if(options.minionStart === undefined) {
     options.minionStart = this.dummyMinionStart;
   }
@@ -47,6 +50,7 @@ function MinionPool(options) {
   this.minionsStarted = 0;
   this.minionsFinished = 0;
   this.minionsIdle = 0;
+  this.minionsWithError = 0;
   this.noMoreTasks = false;
   this.setupEvents();
   this.shutdown = false;
@@ -68,6 +72,9 @@ function MinionPool(options) {
     });
     self.taskSource.on('started', function() {
       self.emit('taskSourceStarted');
+    });
+    self.taskSource.on('error', function(err) {
+      self.emit('taskSourceStartError', err);
     });
     self.taskSource.on('ended', function() {
       self.emit('taskSourceEnded');
@@ -113,8 +120,12 @@ MinionPool.prototype.findAvailableMinion = function() {
 MinionPool.prototype.setupEvents = function() {
   var self = this;
   this.on('allMinionsStarted', function() {
-    self.debugMsg('All workers started');
-    self.taskSource.start();
+    if(self.minionsWithError > 0) {
+      self.end();
+    } else {
+      self.debugMsg('All workers started');
+      self.taskSource.start();
+    }
   });
   this.on('allMinionsFinished', function() {
     self.debugMsg('All workers ended');
@@ -126,6 +137,13 @@ MinionPool.prototype.setupEvents = function() {
       self.emit('allMinionsStarted');
     }
   });
+  this.on('minionStartError', function(id, task) {
+    self.minionsFinished++;
+    self.minionsWithError++;
+    if(self.minionsFinished === self.concurrency) {
+      self.emit('allMinionsFinished');
+    }
+  });
   this.on('minionEnded', function(id) {
     self.minionsFinished++;
     if(self.minionsFinished === self.concurrency) {
@@ -133,12 +151,21 @@ MinionPool.prototype.setupEvents = function() {
     }
   });
   this.on('minionIdle', function(id) {
-    self.debugMsg('Minion ', id, ' is idle');
+    if(self.debug) {
+      self.debugMsg('Minion ', id, ' is idle');
+    }
     self.minions[id].end();
     self.minionsIdle++;
   });
-  this.on('minionTaskFinished', function(id, task) {
-    self.assignTask(id);
+  this.on('minionTaskFinished', function(id, err, task) {
+    if(err && self.debug) {
+      self.debugMsg('Task finished with error: ', util.inspect(err));
+    }
+    if(err && !self.continueOnError) {
+      self.taskSource.end();
+    } else {
+      self.assignTask(id);
+    }
   });
   this.on('taskSourceStarted', function() {
     if(this.taskSourceNext !== undefined) {
@@ -146,6 +173,12 @@ MinionPool.prototype.setupEvents = function() {
         self.assignTask(i);
       }
     }
+  });
+  this.on('taskSourceStartError', function(err) {
+    if(self.debug) {
+      self.debugMsg('Task source start error: ', util.inspect(err));
+    }
+    self.end();
   });
   this.on('taskSourceEnded', function() {
     self.end();
@@ -169,6 +202,9 @@ MinionPool.prototype.startMinion = function(id) {
   newMinion.on('ended', function() {
     self.emit('minionEnded', id);
   });
+  newMinion.on('error', function() {
+    self.emit('minionStartError', id);
+  });
   this.minions.push(newMinion);
   newMinion.start();
 };
@@ -179,13 +215,18 @@ MinionPool.prototype.assignTask = function(minionId) {
   if(self.debug) {
     self.debugMsg('Fetching next task for: #', minionId);
   }
-  this.next(function(task) {
+  this.next(function(err, task) {
+    if(err) {
+      if(self.debug) {
+        self.debugMsg('Task next error: ', util.inspect(err));
+      }      
+    }
     if(task !== undefined) {
       if(self.debug) {
         self.debugMsg('Assigning task: to ', minionId, JSON.stringify(task));
       }
-      minion.once('taskFinished', function(result) {
-        self.emit('minionTaskFinished', minionId, task, result);
+      minion.once('taskFinished', function(err, task) {
+        self.emit('minionTaskFinished', minionId, err, task);
       });
       minion.workOn(task, self.taskEnded);
     } else {
@@ -197,19 +238,19 @@ MinionPool.prototype.assignTask = function(minionId) {
 MinionPool.prototype.next = function(callback) {
   var self = this;
   if(self.noMoreTasks) {
-    callback(undefined);
+    callback(undefined, undefined);
   } else {
-    this.taskSource.next(function(task) {
+    this.taskSource.next(function(err, task) {
       if(task === undefined) {
         self.noMoreTasks = true;
       }
-      callback(task);
+      callback(err, task);
     });
   }
 };
 
 MinionPool.prototype.dummyMinionStart = function(callback) {
-  callback({});
+  callback(undefined, {});
 };
 
 MinionPool.prototype.dummyMinionEnd = function(state, callback) {
@@ -217,7 +258,7 @@ MinionPool.prototype.dummyMinionEnd = function(state, callback) {
 };
 
 MinionPool.prototype.dummyTaskSourceStart = function(callback) {
-  callback({});
+  callback(undefined, {});
 };
 
 MinionPool.prototype.dummyTaskSourceEnd = function(state, callback) {

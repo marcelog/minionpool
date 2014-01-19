@@ -50,11 +50,18 @@ var options = {
   // Optional. Uses the given Function to log messages.
   logger: console.log,
 
+  // Optional, defaults to true. If false, the pool will stop processing tasks
+  // and will end on the first task that finishes with error.
+  continueOnError: true,
+
   // Optional. Called to initialize a 'task source'. It should call the callback
   // with an initial 'state' (like db connections, file descriptors, etc).
   // See below. The state will be passed when calling the next property.
+  // Use the err variable to signal errors.
   taskSourceStart: function(callback) {
-    callback(state);
+    var err = ... ;
+    var state = ... ;
+    callback(err, state); // err === undefined if no errors
   },
 
   // Polling for tasks: The task source produce 'tasks', that are assigned to
@@ -66,9 +73,12 @@ var options = {
   // MinionPool.injectTask() to inject the tasks into the pool, they will be 
   // assigned to free minions (or rescheduled if none is available at the time,
   // be careful not to produce too many tasks).
+  // Use the err variable to signal errors. On errors, will return undefined,
+  // which also means "no more tasks" and the pool will end.
   taskSourceNext: function(state, callback) {
     var task = ...;
-    callback(task);
+    var err = ...;
+    callback(err, task); // err === undefined if no errors
     return state;
   },
 
@@ -81,14 +91,18 @@ var options = {
 
   // The actual code that works on a task. Should call the 'callback' when
   // done, passing the new state.
+  // Use the err variable to signal errors.
   minionTaskHandler: function(task, state, callback) {
-    callback(state);
+    var err = ...;
+    callback(err, state); // err === undefined if no errors
   },
 
   // Optional. Called to initialize each one of the minions. Returns the initial
   // state for each one of them.
+  // Use the err variable to signal errors.
   minionStart: function(callback) {
-    callback(state);
+    var err = ...;
+    callback(err, state); // err === undefined if no errors
   },
 
   // Optional. Called to cleanup any needed stuff for each minion.
@@ -125,9 +139,10 @@ Also, see [this](https://github.com/marcelog/minions/tree/master/examples/rabbit
  1. A pool starts.
  2. All minions in the pool are started. For each minion, *minionStart* is called.
  3. After all the minions are started, the task source is started, by calling
- *taskSourceStart*.
+ *taskSourceStart*. On error, the pool will end.
  4. After the task source starts one task per minion is requested by calling
- *taskSourceNext*.
+ *taskSourceNext*. If taskSourceNext returns error, it will interpreted as
+ no more tasks available, and the pool will end.
  5. When a minion finishes processing a task (*minionTaskHandler*), a new one
  will be assigned to it.
  6. When a minion finishes a task, but the task source does not have a task for

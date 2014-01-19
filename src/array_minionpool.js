@@ -24,11 +24,11 @@ var util = require('util');
 
 function ArrayMinionPool(options, data) {
   options.taskSourceStart = function(c) {
-    c({data: data});
+    c(undefined, {data: data});
   };
   options.taskSourceNext = function(state, c) {
     var item = state.data.pop();
-    c(item);
+    c(undefined, item);
     return state;
   };
   ArrayMinionPool.super_.call(this, options);
