@@ -82,9 +82,17 @@ var options = {
           this.workerQueue = queue;
           logger.debug('Queue: binded to my_key');
           callback(undefined, state);
-          queue.subscribe({ack: true, prefetchCount: 5}, function(msg) {
-            injectTask({queue: queue, task: msg.data.toString('utf-8')});
-          });
+          queue.subscribe(
+            {ack: true, prefetchCount: 5},
+            function(payload, headers, deliveryInfo, message) {
+              injectTask({
+                payload: payload,
+                headers: headers,
+                deliveryInfo: deliveryInfo,
+                message: message
+              });
+            }
+          );
         });
       });
     });
@@ -97,11 +105,13 @@ var options = {
   // Tasks wont be get by polling, but by someone calling injectTask() on the pool
   taskSourceNext: undefined,
 
-  minionTaskHandler: function(data, state, callback) {
-    var queue = data.queue;
-    var task = data.queue;
-    logger.debug('got task: %s', task);
-    queue.shift(false);
+  minionTaskHandler: function(msg, state, callback) {
+    var payload = msg.payload;
+    var headers = msg.headers;
+    var deliveryInfo = msg.deliveryInfo;
+    var message = msg.message;
+    logger.debug('got task: %s', payload);
+    message.acknowledge();
     callback(undefined, state);
   },
   minionStart: function(callback) {
