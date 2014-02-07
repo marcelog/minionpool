@@ -133,6 +133,11 @@ case you want to work with RabbitMQ, it's called [rabbitmq_minionpool](https://g
 
 Also, see [this](https://github.com/marcelog/minions/tree/master/examples/rabbitmq.js) for an example of with plain vanilla **minionpool**.
 
+## Using multiple cores
+
+In the case of having rabbitmq and mysql workers, it's very useful to take advantage
+of multicore cpu's. For this, you can use [taskset](http://linuxcommand.org/man_pages/taskset1.html)
+and launch multiple minionpool instances on different cores.
 
 ## Into the details: Lifecycle (Polling)
 
