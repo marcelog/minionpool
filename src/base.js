@@ -23,6 +23,7 @@ var events = require('events');
 
 function Base(options) {
   Base.super_.call(this);
+  this.endCalled = false;
   for(k in options) {
     this[k] = options[k];
   }
@@ -68,8 +69,11 @@ Base.prototype.start = function() {
 Base.prototype.end = function() {
   var self = this;
   this.endFunction(this.state, function() {
-    self.emit('ended');
-    self.debugMsg('Ended');
+    if(!self.endCalled) {
+      self.endCalled = true;
+      self.emit('ended');
+      self.debugMsg('Ended');
+    }
   });
 };
 exports.Base = Base;
